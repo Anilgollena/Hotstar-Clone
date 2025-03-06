@@ -27,6 +27,7 @@ data "aws_vpc" "default" {
   default = true
 }
 
+# Get Public Subnets Data for Cluster
 data "aws_subnets" "public" {
   filter {
     name   = "vpc-id"
@@ -37,14 +38,17 @@ data "aws_subnets" "public" {
 # Get Availability Zones Data
 data "aws_availability_zones" "available" {}
 
-# EKS Cluster Configuration
+# EKS Cluster Configuration (with multiple availability zones)
 resource "aws_eks_cluster" "example" {
   name     = "EKS_CLOUD"
   role_arn = aws_iam_role.example.arn
 
   vpc_config {
-    subnet_ids = data.aws_subnets.public.ids  # Using public subnet IDs from the data source
+    subnet_ids = data.aws_subnets.public.ids  # Ensure subnets are in valid AZs
   }
+
+  # Ensure at least two availability zones are specified (valid ones)
+  availability_zones = ["us-east-1a", "us-east-1b", "us-east-1c"]
 }
 
 # IAM Role for EKS Node Group
