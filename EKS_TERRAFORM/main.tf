@@ -35,10 +35,7 @@ data "aws_subnets" "public" {
   }
 }
 
-# Get Availability Zones Data
-data "aws_availability_zones" "available" {}
-
-# EKS Cluster Configuration (with multiple availability zones)
+# EKS Cluster Configuration
 resource "aws_eks_cluster" "example" {
   name     = "EKS_CLOUD"
   role_arn = aws_iam_role.example.arn
@@ -47,8 +44,7 @@ resource "aws_eks_cluster" "example" {
     subnet_ids = data.aws_subnets.public.ids  # Ensure subnets are in valid AZs
   }
 
-  # Ensure at least two availability zones are specified (valid ones)
-  availability_zones = ["us-east-1a", "us-east-1b", "us-east-1c"]
+  # No need to specify availability_zones
 }
 
 # IAM Role for EKS Node Group
