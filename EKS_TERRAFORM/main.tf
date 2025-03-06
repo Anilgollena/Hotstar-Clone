@@ -1,70 +1,66 @@
+# Assume Role Policy for EKS Cluster
 data "aws_iam_policy_document" "assume_role" {
   statement {
-    effect = "Allow"
-
+    effect    = "Allow"
+    actions   = ["sts:AssumeRole"]
     principals {
       type        = "Service"
       identifiers = ["eks.amazonaws.com"]
     }
-
-    actions = ["sts:AssumeRole"]
   }
 }
 
+# IAM Role for EKS Cluster
 resource "aws_iam_role" "example" {
   name               = "eks-cluster-cloud"
   assume_role_policy = data.aws_iam_policy_document.assume_role.json
 }
 
+# Attach Policy to EKS Cluster Role
 resource "aws_iam_role_policy_attachment" "example-AmazonEKSClusterPolicy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
   role       = aws_iam_role.example.name
 }
 
-#get vpc data
+# Get VPC and Subnets Data
 data "aws_vpc" "default" {
   default = true
 }
-#get public subnets for cluster
+
 data "aws_subnets" "public" {
   filter {
     name   = "vpc-id"
     values = [data.aws_vpc.default.id]
   }
 }
-#cluster provision
+
+# EKS Cluster Configuration
 resource "aws_eks_cluster" "example" {
   name     = "EKS_CLOUD"
   role_arn = aws_iam_role.example.arn
 
   vpc_config {
-    subnet_ids = [
-      aws_subnet.subnet1.id,
-      aws_subnet.subnet2.id
-    ]
+    subnet_ids = data.aws_subnets.public.ids  # Using public subnet IDs from the data source
   }
 
-  # Optional: You can specify your availability zones like below
-  availability_zones = ["us-east-1a", "us-east-1b", "us-east-1c"]  # Make sure you're using supported zones
-
-  # Specify other necessary attributes such as version, logging, etc.
+  # Optionally, specify Availability Zones
+  availability_zones = ["us-east-1a", "us-east-1b", "us-east-1c"]
 }
 
+# IAM Role for EKS Node Group
 resource "aws_iam_role" "example1" {
-  name = "eks-node-group-cloud"
-
+  name               = "eks-node-group-cloud"
   assume_role_policy = jsonencode({
     Statement = [{
-      Action = "sts:AssumeRole"
-      Effect = "Allow"
-      Principal = {
-        Service = "ec2.amazonaws.com"
-      }
+      Action    = "sts:AssumeRole"
+      Effect    = "Allow"
+      Principal = { Service = "ec2.amazonaws.com" }
     }]
     Version = "2012-10-17"
   })
 }
 
+# Attach Policies to Node Group Role
 resource "aws_iam_role_policy_attachment" "example-AmazonEKSWorkerNodePolicy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
   role       = aws_iam_role.example1.name
@@ -80,22 +76,22 @@ resource "aws_iam_role_policy_attachment" "example-AmazonEC2ContainerRegistryRea
   role       = aws_iam_role.example1.name
 }
 
-#create node group
+# EKS Node Group Configuration
 resource "aws_eks_node_group" "example" {
   cluster_name    = aws_eks_cluster.example.name
   node_group_name = "Node-cloud"
   node_role_arn   = aws_iam_role.example1.arn
-  subnet_ids      = data.aws_subnets.public.ids
+  subnet_ids      = data.aws_subnets.public.ids  # Using public subnet IDs from the data source
 
   scaling_config {
     desired_size = 1
     max_size     = 2
     min_size     = 1
   }
+
   instance_types = ["t2.medium"]
 
-  # Ensure that IAM Role permissions are created before and deleted after EKS Node Group handling.
-  # Otherwise, EKS will not be able to properly delete EC2 Instances and Elastic Network Interfaces.
+  # Ensure that IAM Role permissions are created before node group
   depends_on = [
     aws_iam_role_policy_attachment.example-AmazonEKSWorkerNodePolicy,
     aws_iam_role_policy_attachment.example-AmazonEKS_CNI_Policy,
