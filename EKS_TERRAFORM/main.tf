@@ -34,6 +34,9 @@ data "aws_subnets" "public" {
   }
 }
 
+# Get Availability Zones Data
+data "aws_availability_zones" "available" {}
+
 # EKS Cluster Configuration
 resource "aws_eks_cluster" "example" {
   name     = "EKS_CLOUD"
@@ -42,9 +45,6 @@ resource "aws_eks_cluster" "example" {
   vpc_config {
     subnet_ids = data.aws_subnets.public.ids  # Using public subnet IDs from the data source
   }
-
-  # Optionally, specify Availability Zones
-  availability_zones = ["us-east-1a", "us-east-1b", "us-east-1c"]
 }
 
 # IAM Role for EKS Node Group
