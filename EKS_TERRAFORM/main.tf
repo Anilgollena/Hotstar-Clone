@@ -40,12 +40,14 @@ resource "aws_eks_cluster" "example" {
   name     = "EKS_CLOUD"
   role_arn = aws_iam_role.example.arn
 
-  vpc_config {
-    subnet_ids = data.aws_subnets.public.ids  # Ensure subnets are in valid AZs
+ vpc_config {
+    subnet_ids = data.aws_subnets.public.ids  # Ensure subnets are in supported AZs
   }
 
-  # No need to specify availability_zones
+  # Specify only supported availability zones for the control plane
+  availability_zones = ["us-east-1a", "us-east-1b", "us-east-1c"]  # Use supported AZs
 }
+
 
 # IAM Role for EKS Node Group
 resource "aws_iam_role" "example1" {
