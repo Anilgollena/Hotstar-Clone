@@ -30,21 +30,21 @@ data "aws_vpc" "default" {
 # Create Public Subnets
 resource "aws_subnet" "subnet_1" {
   vpc_id     = data.aws_vpc.default.id  # Reference the default VPC
-  cidr_block = "172.31.1.0/24"
+  cidr_block = "172.31.3.0/24"
   availability_zone = "us-east-1a"
   map_public_ip_on_launch = true
 }
 
 resource "aws_subnet" "subnet_2" {
   vpc_id     = data.aws_vpc.default.id  # Reference the default VPC
-  cidr_block = "172.31.2.0/24"
+  cidr_block = "172.31.4.0/24"
   availability_zone = "us-east-1b"
   map_public_ip_on_launch = true
 }
 
 # Create the EKS Cluster
 resource "aws_eks_cluster" "example" {
-  name     = "EKS_CLOUD"
+  name     = "Eks_CLOUD"
   role_arn = aws_iam_role.example.arn  # Corrected the reference
 
   vpc_config {
@@ -61,7 +61,7 @@ resource "aws_eks_cluster" "example" {
 
 # Create IAM Role for EKS Node Group
 resource "aws_iam_role" "example1" {
-  name = "eks-node-group-cloud"
+  name = "eks-node-grp-cloud"
 
   assume_role_policy = jsonencode({
     Statement = [{
